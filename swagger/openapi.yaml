@@ -1,0 +1,147 @@
+openapi: 3.0.3
+info:
+  title: TestTaskEffectiveMobile
+  version: "1.0.0"
+paths:
+  /subscriptions:
+    post:
+      summary: Create subscription
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSubscription"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Subscription"
+        "400":
+          description: Bad request
+    get:
+      summary: List subscriptions
+      parameters:
+        - in: query
+          name: user_id
+          schema: { type: string, format: uuid }
+        - in: query
+          name: service_name
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Subscription"
+
+  /subscriptions/{id}:
+    get:
+      summary: Get subscription by id
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Subscription" }
+        "404": { description: Not found }
+
+    patch:
+      summary: Update subscription (PATCH)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PatchSubscription" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Subscription" }
+        "404": { description: Not found }
+
+    delete:
+      summary: Delete subscription
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "204": { description: No content }
+        "404": { description: Not found }
+
+  /subscriptions/total:
+    get:
+      summary: Total cost for period (month granularity)
+      parameters:
+        - in: query
+          name: from
+          required: true
+          schema: { type: string, example: "07-2025" }
+        - in: query
+          name: to
+          required: true
+          schema: { type: string, example: "09-2025" }
+        - in: query
+          name: user_id
+          schema: { type: string, format: uuid }
+        - in: query
+          name: service_name
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                    format: int64
+
+components:
+  schemas:
+    CreateSubscription:
+      type: object
+      required: [service_name, price, user_id, start_date]
+      properties:
+        service_name: { type: string }
+        price: { type: integer, description: "rubles, integer" }
+        user_id: { type: string, format: uuid }
+        start_date: { type: string, description: "MM-YYYY" }
+        end_date: { type: string, nullable: true, description: "MM-YYYY or null" }
+
+    PatchSubscription:
+      type: object
+      properties:
+        service_name: { type: string }
+        price: { type: integer }
+        user_id: { type: string, format: uuid }
+        start_date: { type: string, description: "MM-YYYY" }
+        end_date: { type: string, nullable: true, description: "MM-YYYY or null" }
+
+    Subscription:
+      allOf:
+        - $ref: "#/components/schemas/CreateSubscription"
+        - type: object
+          required: [id]
+          properties:
+            id: { type: string, format: uuid }
